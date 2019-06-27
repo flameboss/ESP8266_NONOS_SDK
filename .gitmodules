@@ -1,0 +1,4 @@
+[submodule "flameboss/paho/paho.mqtt.embedded-c"]
+	path = flameboss/paho/paho.mqtt.embedded-c
+	url = https://github.com/flameboss/paho.mqtt.embedded-c.git
+	branch = flameboss

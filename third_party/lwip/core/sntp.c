@@ -599,12 +599,7 @@ sntp_asctime(struct tm *tim_p)
 
 uint64 sntp_get_current_timestamp()
 {
-	if(realtime_stamp == 0){
-		os_printf("please start sntp first !\n");
-		return 0;
-	} else {
-		return realtime_stamp;
-	}
+	return realtime_stamp;
 }
 
 char* sntp_get_real_time(time_t t)
@@ -772,7 +767,7 @@ sntp_try_next_server(void* arg)
     }
     if (!ip_addr_isany(&sntp_servers[sntp_current_server].addr)
 #if SNTP_SERVER_DNS
-        || ((sntp_servers[sntp_current_server].name != NULL) && os_strlen(sntp_servers[sntp_current_server].name))
+        || (sntp_servers[sntp_current_server].name != NULL)
 #endif
         ) {
       LWIP_DEBUGF(SNTP_DEBUG_STATE, ("sntp_try_next_server: Sending request to server %"U16_F"\n",
@@ -947,7 +942,7 @@ sntp_request(void *arg)
   /* initialize SNTP server address */
 #if SNTP_SERVER_DNS
 
-  if (sntp_servers[sntp_current_server].name && os_strlen(sntp_servers[sntp_current_server].name)) {
+  if (sntp_servers[sntp_current_server].name) {
     /* always resolve the name and rely on dns-internal caching & timeout */
     ip_addr_set_any(&sntp_servers[sntp_current_server].addr);
     err = dns_gethostbyname(sntp_servers[sntp_current_server].name, &sntp_server_address,

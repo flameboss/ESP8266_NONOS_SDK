@@ -185,7 +185,7 @@ program_once:
 program:
 	$(ESPTOOL) -cs 3 -cp $(ESP_PORT) -ca $(APP_ADDR) -cf $(APP_PATH)
 
-erase:	/tmp/ff.bin
+erase:
 	LANG=C dd if=/dev/zero bs=2m count=1 | LANG=C tr "\000" "\377" >/tmp/ff.bin
 	$(ESPTOOL) -cp $(ESP_PORT) -ca 0xfb000 -cf /tmp/ff.bin
 

@@ -13,7 +13,8 @@
 #
 ifndef PDIR
 SUBDIRS =
-FB_SRC_DIR = $(abspath paho.mqtt.embedded-c/MQTTPacket/src) $(abspath paho.mqtt.embedded-c/MQTTClient-C/src)
+FB_SRC_DIR = $(abspath ../../../../paho.mqtt.embedded-c/MQTTPacket/src) \
+           $(abspath ../../../../paho.mqtt.embedded-c/MQTTClient-C/src)
 VPATH = $(FB_SRC_DIR)
 CSRCS = \
 	MQTTConnectServer.c \

@@ -12,19 +12,10 @@
 #     a generated lib/image xxx.a ()
 #
 ifndef PDIR
-FB_SRC_DIR = $(abspath ../../../../flameboss/Sources/flameboss)
-VPATH = $(FB_SRC_DIR)
-CSRCS = \
-	cli.c \
-	configuration.c \
-	fb.c \
-	fb_meat_alarm.c \
-	fb_open_pit.c \
-	fb_pit_alarm.c \
-	fb_wifi.c \
-	pid.c
-
-GEN_LIBS = libflameboss.a
+BSP_DIR = $(abspath ../../../../../bsp)
+VPATH = $(BSP_DIR)/fan
+CSRCS = $(shell cd $(BSP_DIR)/fan && ls *.c)
+GEN_LIBS = libbsp_fan.a
 endif
 
 #############################################################
@@ -34,9 +25,7 @@ endif
 #   makefile at its root level - these are then overridden
 #   for a subtree within the makefile rooted therein
 #
-#DEFINES +=
-
-
+#DEFINES += 
 
 #############################################################
 # Recursion Magic - Don't touch this!!
@@ -49,15 +38,5 @@ endif
 #
 # Required for each makefile to inherit from the parent
 #
-
-INCLUDES += \
-	-I . \
-	-I ../bsp/esp8266-sdk \
-	-I ../bsp/ee_printf \
-	-I ../bsp/crc32 \
-	-I ../bsp/common \
-	-I ../../driver_lib/include/driver
-
-PDIR := ../$(PDIR)
+PDIR := ../../$(PDIR)
 sinclude $(PDIR)Makefile
-

@@ -22,6 +22,8 @@ GEN_IMAGES= eagle.app.v6.out
 GEN_BINS= eagle.app.v6.bin
 SPECIAL_MKTARGETS=$(APP_MKTARGETS)
 SUBDIRS=    \
+	bsp/fb400 \
+	bsp/fan \
 	bsp/common \
 	bsp/crc32 \
 	bsp/ee_printf \
@@ -64,6 +66,8 @@ COMPONENTS_eagle.app.v6 = \
 	bsp/crc32/libbsp_crc32.a \
 	bsp/ee_printf/libbsp_ee_printf.a \
 	bsp/esp8266-sdk/libbsp_esp8266-sdk.a \
+	bsp/fan/libbsp_fan.a \
+	bsp/fb400/libbsp_fb400.a \
 	bsp/common/libbsp_common.a \
 	driver/libdriver.a \
 	paho/libpaho.a
@@ -149,6 +153,8 @@ INCLUDES := $(INCLUDES) \
 	-I$(PDIR)../driver_lib/include \
 	-I$(PDIR)../../../flameboss/Sources/flameboss \
 	-I$(PDIR)../../../flameboss/Sources/unit_tests \
+	-I$(PDIR)../../../bsp/fb400 \
+	-I$(PDIR)../../../bsp/fan \
 	-I$(PDIR)../../../bsp/esp8266-sdk \
 	-I$(PDIR)../../../bsp/ee_printf \
 	-I$(PDIR)../../../bsp/crc32 \

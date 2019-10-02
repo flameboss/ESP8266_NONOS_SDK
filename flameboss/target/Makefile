@@ -12,10 +12,10 @@
 #     a generated lib/image xxx.a ()
 #
 ifndef PDIR
-BSP_DIR = $(abspath ../../../../../bsp)
-VPATH = $(BSP_DIR)/fb400
-CSRCS = $(shell cd $(BSP_DIR)/fb400 && ls *.c)
-GEN_LIBS = libbsp_fb400.a
+TARGET_DIR = $(abspath ../../..)
+VPATH = $(TARGET_DIR)
+CSRCS = $(shell cd $(TARGET_DIR) && ls *.c)
+GEN_LIBS = libtarget.a
 endif
 
 #############################################################
@@ -26,6 +26,9 @@ endif
 #   for a subtree within the makefile rooted therein
 #
 #DEFINES += 
+INCLUDES += \
+	-I . \
+	-I ../bsp/common
 
 #############################################################
 # Recursion Magic - Don't touch this!!
@@ -38,5 +41,5 @@ endif
 #
 # Required for each makefile to inherit from the parent
 #
-PDIR := ../../$(PDIR)
+PDIR := ../$(PDIR)
 sinclude $(PDIR)Makefile

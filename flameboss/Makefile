@@ -193,5 +193,5 @@ program:
 
 erase:
 	LANG=C dd if=/dev/zero bs=2m count=1 | LANG=C tr "\000" "\377" >/tmp/ff.bin
-	$(ESPTOOL) -cp $(ESP_PORT) -ca 0xfb000 -cf /tmp/ff.bin
+	$(ESPTOOL) -cp $(ESP_PORT) -ca 0 -cf /tmp/ff.bin
 

@@ -13,6 +13,7 @@
 #
 ifndef PDIR
 FB_SRC_DIR = $(abspath ../../../../flameboss/Sources/flameboss)
+FB_SRC_DIR = $(abspath ../../../../bsp/nau7802)
 VPATH = $(FB_SRC_DIR)
 CSRCS = \
 	cli.c \
@@ -22,7 +23,8 @@ CSRCS = \
 	fb_open_pit.c \
 	fb_pit_alarm.c \
 	fb_wifi.c \
-	pid.c
+	pid.c \
+	adc_nau7802.c
 
 GEN_LIBS = libflameboss.a
 endif

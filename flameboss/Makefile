@@ -26,7 +26,6 @@ SUBDIRS=    \
 	bsp/crc32 \
 	bsp/ee_printf \
 	bsp/esp8266-sdk \
-	bsp/fan \
 	flameboss \
 	driver \
 	paho \
@@ -66,9 +65,7 @@ COMPONENTS_eagle.app.v6 = \
 	bsp/crc32/libbsp_crc32.a \
 	bsp/ee_printf/libbsp_ee_printf.a \
 	bsp/esp8266-sdk/libbsp_esp8266-sdk.a \
-	bsp/fan/libbsp_fan.a \
 	bsp/common/libbsp_common.a \
-	bsp/fan/libbsp_fan.a \
 	driver/libdriver.a \
 	paho/libpaho.a \
 	target/libtarget.a
@@ -155,11 +152,11 @@ INCLUDES := $(INCLUDES) \
 	-I$(PDIR)../driver_lib/include \
 	-I$(PDIR)../../../flameboss/Sources/flameboss \
 	-I$(PDIR)../../../flameboss/Sources/unit_tests \
-	-I$(PDIR)../../../bsp/fan \
 	-I$(PDIR)../../../bsp/esp8266-sdk \
 	-I$(PDIR)../../../bsp/ee_printf \
 	-I$(PDIR)../../../bsp/crc32 \
 	-I$(PDIR)../../../bsp/common \
+	-I$(PDIR)../../../bsp/nau7802 \
 	-I$(PDIR)../../../paho.mqtt.embedded-c/MQTTPacket/src \
 	-I$(PDIR)../../../paho.mqtt.embedded-c/MQTTClient-C/src
 PDIR := ../$(PDIR)

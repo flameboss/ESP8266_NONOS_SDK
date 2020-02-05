@@ -13,16 +13,14 @@
 #
 ifndef PDIR
 FB_SRC_DIR = $(abspath ../../../../flameboss/Sources/flameboss)
-VPATH = $(FB_SRC_DIR)
+FB_ADC_DIR = $(abspath ../../../../bsp/nau7802)
+VPATH = $(FB_SRC_DIR) $(FB_ADC_DIR)
 CSRCS = \
 	cli.c \
 	configuration.c \
-	fb.c \
 	fb_meat_alarm.c \
-	fb_open_pit.c \
-	fb_pit_alarm.c \
 	fb_wifi.c \
-	pid.c
+	adc_nau7802.c
 
 GEN_LIBS = libflameboss.a
 endif
@@ -56,6 +54,7 @@ INCLUDES += \
 	-I ../bsp/ee_printf \
 	-I ../bsp/crc32 \
 	-I ../bsp/common \
+	-I ../bsp/nau7802 \
 	-I ../../driver_lib/include/driver
 
 PDIR := ../$(PDIR)

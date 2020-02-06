@@ -13,8 +13,8 @@
 #
 ifndef PDIR
 FB_SRC_DIR = $(abspath ../../../../flameboss/Sources/flameboss)
-FB_SRC_DIR = $(abspath ../../../../bsp/nau7802)
-VPATH = $(FB_SRC_DIR)
+NAU_SRC_DIR = $(abspath ../../../../bsp/nau7802)
+VPATH = $(FB_SRC_DIR) $(NAU_SRC_DIR)
 CSRCS = \
 	cli.c \
 	configuration.c \

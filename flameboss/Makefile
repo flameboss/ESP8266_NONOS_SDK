@@ -160,6 +160,7 @@ INCLUDES := $(INCLUDES) \
 	-I$(PDIR)../../../bsp/ee_printf \
 	-I$(PDIR)../../../bsp/crc32 \
 	-I$(PDIR)../../../bsp/common \
+	-I$(PDIR)../../../bsp/fb400 \
 	-I$(PDIR)../../../paho.mqtt.embedded-c/MQTTPacket/src \
 	-I$(PDIR)../../../paho.mqtt.embedded-c/MQTTClient-C/src
 PDIR := ../$(PDIR)

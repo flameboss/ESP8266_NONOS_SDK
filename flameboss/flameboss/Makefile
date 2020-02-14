@@ -14,6 +14,7 @@
 ifndef PDIR
 FB_SRC_DIR = $(abspath ../../../../flameboss/Sources/flameboss)
 FB400_SRC_DIR = $(abspath ../../../../bsp/fb400)
+FB400_C_FILES = $(shell cd $(FB400_SRC_DIR) && ls *.c)
 NAU_SRC_DIR = $(abspath ../../../../bsp/nau7802)
 VPATH = $(FB_SRC_DIR) $(NAU_SRC_DIR) $(FB400_SRC_DIR)
 CSRCS = \
@@ -26,7 +27,7 @@ CSRCS = \
 	fb_wifi.c \
 	pid.c \
 	adc_nau7802.c \
-	fan_esp.c
+	$(FB400_C_FILES)
 
 GEN_LIBS = libflameboss.a
 endif

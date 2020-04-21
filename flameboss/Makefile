@@ -162,7 +162,8 @@ INCLUDES := $(INCLUDES) \
 	-I$(PDIR)../../../bsp/common \
 	-I$(PDIR)../../../bsp/fb400 \
 	-I$(PDIR)../../../paho.mqtt.embedded-c/MQTTPacket/src \
-	-I$(PDIR)../../../paho.mqtt.embedded-c/MQTTClient-C/src
+	-I$(PDIR)../../../paho.mqtt.embedded-c/MQTTClient-C/src \
+	-I$(PDIR)../../../jsmn
 PDIR := ../$(PDIR)
 sinclude $(PDIR)Makefile
 

@@ -15,6 +15,8 @@ ifndef PDIR
 BSP_DIR = $(abspath ../../../../../bsp)
 VPATH = $(BSP_DIR)/esp8266-sdk
 CSRCS = $(shell cd $(BSP_DIR)/esp8266-sdk && ls *.c)
+ASRCS = $(shell cd $(BSP_DIR)/esp8266-sdk && ls *.S)
+
 GEN_LIBS = libbsp_esp8266-sdk.a
 endif
 

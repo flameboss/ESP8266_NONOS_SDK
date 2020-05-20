@@ -44,7 +44,8 @@ APP_ADDR=0x81000
 APP_PATH=../bin/upgrade/user2.2048.new.3.bin
 endif
 ESPTOOL=esptool -v
-CCFLAGS += -Og
+FB_FW_DIR = $(abspath ../../../..)
+CCFLAGS += -Og -fdebug-prefix-map=$(FB_FW_DIR)/=fb_fw/
 
 TARGET_LDFLAGS =		\
 	-nostdlib		\

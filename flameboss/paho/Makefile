@@ -55,16 +55,6 @@ endif
 # Required for each makefile to inherit from the parent
 #
 
-INCLUDES += \
-	-I . \
-	-I ../bsp/esp8266-sdk \
-	-I ../bsp/ee_printf \
-	-I ../bsp/crc32 \
-	-I ../bsp/common \
-	-I ../../driver_lib/include/driver \
-	-I flameboss/paho/paho.mqtt.embedded-c/MQTTPacket/src \
-	-I flameboss/paho/paho.mqtt.embedded-c/MQTTClient-C/src
-
 PDIR := ../$(PDIR)
 sinclude $(PDIR)Makefile
 

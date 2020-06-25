@@ -26,6 +26,7 @@ SUBDIRS=    \
 	bsp/crc32 \
 	bsp/ee_printf \
 	bsp/esp8266-sdk \
+	bsp/fb400-esp8266-sdk \
 	bsp/fan \
 	flameboss \
 	driver \
@@ -67,6 +68,7 @@ COMPONENTS_eagle.app.v6 = \
 	bsp/crc32/libbsp_crc32.a \
 	bsp/ee_printf/libbsp_ee_printf.a \
 	bsp/esp8266-sdk/libbsp_esp8266-sdk.a \
+	bsp/fb400-esp8266-sdk/libbsp_fb400-esp8266-sdk.a \
 	bsp/fan/libbsp_fan.a \
 	bsp/common/libbsp_common.a \
 	bsp/fan/libbsp_fan.a \
@@ -169,6 +171,7 @@ INCLUDES := $(INCLUDES) \
 	-I$(PDIR)../../../flameboss/Sources/unit_tests \
 	-I$(PDIR)../../../bsp/fan \
 	-I$(PDIR)../../../bsp/esp8266-sdk \
+	-I$(PDIR)../../../bsp/fb400-esp8266-sdk \
 	-I$(PDIR)../../../bsp/ee_printf \
 	-I$(PDIR)../../../bsp/crc32 \
 	-I$(PDIR)../../../bsp/common \

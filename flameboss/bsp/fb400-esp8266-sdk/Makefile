@@ -12,24 +12,11 @@
 #     a generated lib/image xxx.a ()
 #
 ifndef PDIR
-FB_SRC_DIR = $(abspath ../../../../flameboss/Sources/flameboss)
-FB400_SRC_DIR = $(abspath ../../../../bsp/fb400)
-FB400_C_FILES = $(shell cd $(FB400_SRC_DIR) && ls *.c)
-NAU_SRC_DIR = $(abspath ../../../../bsp/nau7802)
-VPATH = $(FB_SRC_DIR) $(NAU_SRC_DIR) $(FB400_SRC_DIR)
-CSRCS = \
-	cli.c \
-	configuration.c \
-	fb.c \
-	fb_meat_alarm.c \
-	fb_open_pit.c \
-	fb_pit_alarm.c \
-	fb_wifi.c \
-	pid.c \
-	adc_nau7802.c \
-	$(FB400_C_FILES)
-
-GEN_LIBS = libflameboss.a
+BSP_DIR = $(abspath ../../../../../bsp)
+VPATH = $(BSP_DIR)/fb400-esp8266-sdk
+CSRCS = $(shell cd $(BSP_DIR)/fb400-esp8266-sdk && ls *.c)
+ASRCS = $(shell cd $(BSP_DIR)/fb400-esp8266-sdk && ls *.S)
+GEN_LIBS = libbsp_fb400-esp8266-sdk.a
 endif
 
 #############################################################
@@ -39,9 +26,7 @@ endif
 #   makefile at its root level - these are then overridden
 #   for a subtree within the makefile rooted therein
 #
-#DEFINES +=
-
-
+#DEFINES += 
 
 #############################################################
 # Recursion Magic - Don't touch this!!
@@ -54,7 +39,5 @@ endif
 #
 # Required for each makefile to inherit from the parent
 #
-
-PDIR := ../$(PDIR)
+PDIR := ../../$(PDIR)
 sinclude $(PDIR)Makefile
-

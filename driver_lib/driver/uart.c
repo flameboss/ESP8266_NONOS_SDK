@@ -295,6 +295,13 @@ uart_test_rx()
 }
 #endif
 
+static void (*user_rx)(uint8_t);
+
+void uart_set_rx_callback(void (*fp)(uint8_t))
+{
+	user_rx = fp;
+}
+
 LOCAL void ICACHE_FLASH_ATTR ///////
 uart_recvTask(os_event_t *events)
 {
@@ -309,6 +316,9 @@ uart_recvTask(os_event_t *events)
         for (idx = 0; idx < fifo_len; idx++) {
             d_tmp = READ_PERI_REG(UART_FIFO(UART0)) & 0xFF;
             uart_tx_one_char(UART0, d_tmp);
+            if (user_rx) {
+                (*user_rx)(d_tmp);
+            }
         }
 
         WRITE_PERI_REG(UART_INT_CLR(UART0), UART_RXFIFO_FULL_INT_CLR | UART_RXFIFO_TOUT_INT_CLR);

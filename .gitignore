@@ -1,0 +1,4 @@
+.output
+bin/upgrade
+lib/liblwip.a
+lib/libmbedtls.a

@@ -29,6 +29,7 @@
 #include "driver/uart_register.h"
 #include "mem.h"
 #include "os_type.h"
+#include <cli.h>
 
 // UartDev is defined and initialized in rom code.
 extern UartDevice    UartDev;
@@ -300,6 +301,7 @@ uart_recvTask(os_event_t *events)
         for(idx=0;idx<fifo_len;idx++) {
             d_tmp = READ_PERI_REG(UART_FIFO(UART0)) & 0xFF;
             uart_tx_one_char(UART0, d_tmp);
+            cli_recv(d_tmp);
         }
         WRITE_PERI_REG(UART_INT_CLR(UART0), UART_RXFIFO_FULL_INT_CLR|UART_RXFIFO_TOUT_INT_CLR);
         uart_rx_intr_enable(UART0);

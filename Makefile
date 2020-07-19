@@ -410,5 +410,7 @@ $(foreach image,$(GEN_IMAGES),$(eval $(call MakeImage,$(basename $(image)))))
 #
 
 INCLUDES := $(INCLUDES) -I $(PDIR)include -I $(PDIR)include/$(TARGET) -I $(PDIR)driver_lib/include
-PDIR := ../$(PDIR)
-sinclude $(PDIR)Makefile
+
+# At the top directory of project this is not required nor desirable
+#PDIR := ../$(PDIR)
+#sinclude $(PDIR)Makefile

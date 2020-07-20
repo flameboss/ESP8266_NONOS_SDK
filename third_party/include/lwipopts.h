@@ -1,3 +1,4 @@
+#define DHCP_DOES_ARP_CHECK 0
 /**
  * @file
  *

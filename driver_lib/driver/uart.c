@@ -51,6 +51,13 @@ os_event_t    uart_recvTaskQueue[uart_recvTaskQueueLen];
 
 LOCAL void uart0_rx_intr_handler(void *para);
 
+static void (*p_user_recv)(uint8_t) = NULL;
+
+void ICACHE_FLASH_ATTR uart_set_user_recv(void (*fp)(uint8_t))
+{
+    p_user_recv = fp;
+}
+
 /******************************************************************************
  * FunctionName : uart_config
  * Description  : Internal used function
@@ -309,6 +316,9 @@ uart_recvTask(os_event_t *events)
         for (idx = 0; idx < fifo_len; idx++) {
             d_tmp = READ_PERI_REG(UART_FIFO(UART0)) & 0xFF;
             uart_tx_one_char(UART0, d_tmp);
+            if (p_user_recv) {
+                (*p_user_recv)(d_tmp);
+            }
         }
 
         WRITE_PERI_REG(UART_INT_CLR(UART0), UART_RXFIFO_FULL_INT_CLR | UART_RXFIFO_TOUT_INT_CLR);

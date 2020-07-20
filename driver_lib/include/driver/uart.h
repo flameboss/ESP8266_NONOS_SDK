@@ -225,5 +225,7 @@ void UART_SetPrintPort(uint8 uart_no);
 bool UART_CheckOutputFinished(uint8 uart_no, uint32 time_out_us);
 //==============================================
 
+void uart_set_user_recv(void (*fp)(uint8_t));
+
 #endif
 

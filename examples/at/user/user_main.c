@@ -67,7 +67,7 @@ uint32 user_iram_memory_is_enabled(void)
 }
 #endif
 
-#define FLAMEBOSS_VERSION "FLAMEBOSS_VER: 3.1.1\r\n"
+#define FLAMEBOSS_VERSION "FLAMEBOSS_VER: 3.1.2\r\n"
 
 void ICACHE_FLASH_ATTR
 at_setupCmdFbVer(uint8_t id, char *pPara)

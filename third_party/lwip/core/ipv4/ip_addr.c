@@ -110,15 +110,18 @@ ip4_addr_netmask_valid(u32_t netmask)
   return 1;
 }
 
-/* Here for now until needed in other places in lwIP */
-#ifndef isprint
+/* Use simple inline ctype replacements to avoid __locale_ctype_ptr dependency */
+#undef isprint
+#undef isdigit
+#undef isxdigit
+#undef islower
+#undef isspace
 #define in_range(c, lo, up)  ((u8_t)c >= lo && (u8_t)c <= up)
 #define isprint(c)           in_range(c, 0x20, 0x7f)
-//#define isdigit(c)           in_range(c, '0', '9')
-//#define isxdigit(c)          (isdigit(c) || in_range(c, 'a', 'f') || in_range(c, 'A', 'F'))
+#define isdigit(c)           in_range(c, '0', '9')
+#define isxdigit(c)          (isdigit(c) || in_range(c, 'a', 'f') || in_range(c, 'A', 'F'))
 #define islower(c)           in_range(c, 'a', 'z')
 #define isspace(c)           (c == ' ' || c == '\f' || c == '\n' || c == '\r' || c == '\t' || c == '\v')
-#endif
 
 /**
  * Ascii internet address interpretation routine.

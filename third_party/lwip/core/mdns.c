@@ -897,32 +897,53 @@ mdns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr,
 }
 
 /**
+ * free the info copy made by mdns_init().
+ */
+static void ICACHE_FLASH_ATTR
+mdns_free_info(void)
+{
+	uint8 text_index = 0;
+	if (ms_info == NULL) {
+		return;
+	}
+	for(text_index = 0;text_index < 10;text_index++) {
+		if(ms_info->txt_data[text_index] != NULL) {
+			os_free(ms_info->txt_data[text_index]);
+			ms_info->txt_data[text_index] = NULL;
+		}
+	}
+	if (ms_info->host_name != NULL) {
+		os_free(ms_info->host_name);
+		ms_info->host_name = NULL;
+	}
+	if (ms_info->server_name != NULL) {
+		os_free(ms_info->server_name);
+		ms_info->server_name = NULL;
+	}
+	os_free(ms_info);
+	ms_info = NULL;
+}
+
+/**
  * close the UDP pcb .
  */
 void ICACHE_FLASH_ATTR
 mdns_close(void)
 {
-	uint8 text_index = 0;
-	if (mdns_pcb != NULL && ms_info != NULL) {
+	/* The free was gated on mdns_pcb != NULL, but mdns_init() allocates
+	 * ms_info before it creates the pcb and returns early (leaving the pcb
+	 * NULL) if the address is 0. Callers that re-init periodically then
+	 * leaked the whole info copy on every cycle. Free it whether or not a
+	 * pcb was ever created. */
+	if (mdns_pcb != NULL) {
 		udp_remove(mdns_pcb);
-		for(text_index = 0;text_index < 10;text_index++) {
-				if(ms_info->txt_data[text_index] != NULL) {
-					os_free(ms_info->txt_data[text_index]);
-					ms_info->txt_data[text_index] = NULL;
-				}
-		}
-		if (ms_info->host_name != NULL) {
-			os_free(ms_info->host_name);
-			ms_info->host_name = NULL;
-		}
-		if (ms_info->server_name != NULL) {
-			os_free(ms_info->server_name);
-			ms_info->server_name = NULL;
-		}
-		os_free(ms_info);
 		mdns_pcb = NULL;
-		ms_info = NULL;
 	}
+	/* mdns_reg() runs off this timer with ms_info as its argument, so it has
+	 * to stop before the info goes away. */
+	os_timer_disarm(&mdns_timer);
+	mdns_flag = 0;
+	mdns_free_info();
 }
 
 void ICACHE_FLASH_ATTR
@@ -1042,29 +1063,56 @@ mdns_init(struct mdns_info *info) {
 	struct ip_addr ap_host_addr;
 	struct ip_info ipconfig;
 	uint8 text_index = 0;
+
+	/* Only the first of these allocations was checked, so under heap
+	 * pressure a NULL from one of the later ones was memcpy'd into
+	 * (STORE_PROHIBITED at address 0). Check them all, and release what has
+	 * been allocated so far on every failure path below -- the info copy is
+	 * built before the address is validated and before the pcb exists, and
+	 * mdns_close() used to have no pcb to free it against. */
 	ms_info = (struct mdns_info *)os_zalloc(sizeof(struct mdns_info));
-	if (ms_info != NULL) {
-		os_memcpy(ms_info,info,sizeof(struct mdns_info));
-		ms_info->host_name = (char *)os_zalloc(os_strlen(info->host_name)+1);
-		os_memcpy(ms_info->host_name,info->host_name,os_strlen(info->host_name));
-		ms_info->server_name = (char *)os_zalloc(os_strlen(info->server_name)+1);
-		os_memcpy(ms_info->server_name,info->server_name,os_strlen(info->server_name));
-		for(text_index = 0;text_index < 10;text_index++) {
-			if(info->txt_data[text_index] != NULL) {
-				ms_info->txt_data[text_index] = (char *)os_zalloc(os_strlen(info->txt_data[text_index])+1);
-				os_memcpy(ms_info->txt_data[text_index],info->txt_data[text_index],os_strlen(info->txt_data[text_index]));
-			} else {
-				break;
-			}
-
-		}
-
-	} else {
+	if (ms_info == NULL) {
 		os_printf("ms_info alloc failed\n");
 		return;
 	}
+	os_memcpy(ms_info,info,sizeof(struct mdns_info));
+	/* the copy carries the caller's pointers; ms_info owns its own or none */
+	ms_info->host_name = NULL;
+	ms_info->server_name = NULL;
+	os_memset(ms_info->txt_data, 0, sizeof(ms_info->txt_data));
+
+	ms_info->host_name = (char *)os_zalloc(os_strlen(info->host_name)+1);
+	if (ms_info->host_name == NULL) {
+		os_printf("host_name alloc failed\n");
+		mdns_free_info();
+		return;
+	}
+	os_memcpy(ms_info->host_name,info->host_name,os_strlen(info->host_name));
+	ms_info->server_name = (char *)os_zalloc(os_strlen(info->server_name)+1);
+	if (ms_info->server_name == NULL) {
+		os_printf("server_name alloc failed\n");
+		mdns_free_info();
+		return;
+	}
+	os_memcpy(ms_info->server_name,info->server_name,os_strlen(info->server_name));
+	for(text_index = 0;text_index < 10;text_index++) {
+		if(info->txt_data[text_index] != NULL) {
+			ms_info->txt_data[text_index] = (char *)os_zalloc(os_strlen(info->txt_data[text_index])+1);
+			if (ms_info->txt_data[text_index] == NULL) {
+				os_printf("txt_data alloc failed\n");
+				mdns_free_info();
+				return;
+			}
+			os_memcpy(ms_info->txt_data[text_index],info->txt_data[text_index],os_strlen(info->txt_data[text_index]));
+		} else {
+			break;
+		}
+
+	}
+
 	if (ms_info->ipAddr == 0) {
 		os_printf("mdns ip error!\n ");
+		mdns_free_info();
 		return;
 	}
 	host_addr.addr = ms_info->ipAddr ;
@@ -1088,41 +1136,50 @@ mdns_init(struct mdns_info *info) {
 	/* initialize mDNS */
 	mdns_pcb = udp_new();
 
-	if (mdns_pcb != NULL) {
-		/* join to the multicast address 224.0.0.251 */
-		if(wifi_get_opmode() == 0x03 || wifi_get_opmode() == 0x01) {
-			if (igmp_joingroup(&host_addr, &multicast_addr) != ERR_OK) {
-				os_printf("sta udp_join_multigrup failed!\n");
-				return;
-			};
-		}
-		if(wifi_get_opmode() == 0x03 || wifi_get_opmode() == 0x02) {
-		   wifi_get_ip_info(SOFTAP_IF, &ipconfig);
-		   ap_host_addr.addr = ipconfig.ip.addr;
-		   if (igmp_joingroup(&ap_host_addr, &multicast_addr) != ERR_OK) {
-				os_printf("ap udp_join_multigrup failed!\n");
-				return;
-			};
-		}
-		register_flag = 1;
-		/* join to any IP address at the port 5353 */
-		if (udp_bind(mdns_pcb, IP_ADDR_ANY, DNS_MDNS_PORT) != ERR_OK) {
-			os_printf("udp_bind failed!\n");
+	if (mdns_pcb == NULL) {
+		os_printf("mdns udp_new failed!\n");
+		mdns_free_info();
+		return;
+	}
+
+	/* mdns_close() undoes the pcb and the info copy together, so use it
+	 * rather than returning with a half-built responder in place. */
+	/* join to the multicast address 224.0.0.251 */
+	if(wifi_get_opmode() == 0x03 || wifi_get_opmode() == 0x01) {
+		if (igmp_joingroup(&host_addr, &multicast_addr) != ERR_OK) {
+			os_printf("sta udp_join_multigrup failed!\n");
+			mdns_close();
 			return;
 		};
-
-		/*loopback function for the multicast(224.0.0.251) messages received at port 5353*/
-//		mdns_enable();
-		udp_recv(mdns_pcb, mdns_recv, ms_info);
-		mdns_flag = 1;
-		/*
-		 * Register the name of the instrument
-		 */
-
-		os_timer_disarm(&mdns_timer);
-		os_timer_setfn(&mdns_timer, (os_timer_func_t *)mdns_reg,ms_info);
-		os_timer_arm(&mdns_timer, 1000, 1);
 	}
+	if(wifi_get_opmode() == 0x03 || wifi_get_opmode() == 0x02) {
+	   wifi_get_ip_info(SOFTAP_IF, &ipconfig);
+	   ap_host_addr.addr = ipconfig.ip.addr;
+	   if (igmp_joingroup(&ap_host_addr, &multicast_addr) != ERR_OK) {
+			os_printf("ap udp_join_multigrup failed!\n");
+			mdns_close();
+			return;
+		};
+	}
+	register_flag = 1;
+	/* join to any IP address at the port 5353 */
+	if (udp_bind(mdns_pcb, IP_ADDR_ANY, DNS_MDNS_PORT) != ERR_OK) {
+		os_printf("udp_bind failed!\n");
+		mdns_close();
+		return;
+	};
+
+	/*loopback function for the multicast(224.0.0.251) messages received at port 5353*/
+//		mdns_enable();
+	udp_recv(mdns_pcb, mdns_recv, ms_info);
+	mdns_flag = 1;
+	/*
+	 * Register the name of the instrument
+	 */
+
+	os_timer_disarm(&mdns_timer);
+	os_timer_setfn(&mdns_timer, (os_timer_func_t *)mdns_reg,ms_info);
+	os_timer_arm(&mdns_timer, 1000, 1);
 }
 
 #endif /* LWIP_MDNS */

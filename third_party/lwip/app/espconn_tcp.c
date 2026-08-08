@@ -876,13 +876,47 @@ static void ICACHE_FLASH_ATTR espconn_tcp_finish(void *arg)
  * Returns      : ERR_OK: try to send some data by calling tcp_output
  *                ERR_ABRT: if you have called tcp_abort from within the function!
 *******************************************************************************/
+/*Counts acks that arrived with nothing to credit them to -- see the guards in
+ *espconn_client_sent() and espconn_server_sent() below.*/
+uint32 espconn_sent_no_pbuf_cnt = 0;
+
+/*Both sent callbacks used to dereference pcommon.pbuf unconditionally. An ack
+ *can arrive when that list is already empty: espconn_tcp_finish() drains it once
+ *every queued buffer has been acked, and the reconnect and disconnect paths drain
+ *it on teardown, so any ack the stack still delivers afterwards lands here with
+ *nothing outstanding. Observed in the field on 4.27.028: exception 28, excvaddr
+ *0xc, pc at the l16ui of pbuf->tot_len in espconn_server_sent, with the pbuf
+ *register zero and 141 bytes just acked on an accepted local-access connection.
+ *
+ *There is nothing useful to do with such an ack -- the accounting for that data
+ *is already gone -- so skip the credit and still call espconn_tcp_finish(), whose
+ *own loop is guarded on pcommon.pbuf and whose espconn_tcp_write() pushes
+ *anything left queued. That drops a stale credit rather than stalling the
+ *connection.
+ *
+ *arg is checked too: espconn_server_poll() already allows for a NULL arg on a
+ *connection the stack has torn down, and these callbacks sit on the same pcbs.
+ *
+ *Counted rather than silent. The count is what distinguishes a merely drained
+ *list from a freed espconn_msg -- the latter would mean these callbacks are
+ *writing into freed memory and needs a real fix, not a guard -- and a core dump
+ *taken after the fault cannot tell those two apart.*/
 static err_t ICACHE_FLASH_ATTR
 espconn_client_sent(void *arg, struct tcp_pcb *pcb, u16_t len)
 {
 	espconn_msg *psent_cb = arg;
 
+	if (psent_cb == NULL) {
+		espconn_sent_no_pbuf_cnt++;
+		return ERR_OK;
+	}
+
 	psent_cb->pcommon.pcb = pcb;
-	psent_cb->pcommon.pbuf->tot_len += len;
+	if (psent_cb->pcommon.pbuf == NULL) {
+		espconn_sent_no_pbuf_cnt++;
+	} else {
+		psent_cb->pcommon.pbuf->tot_len += len;
+	}
 	psent_cb->pcommon.packet_info.sent_length = len;
 
 	/*Send more data for one active connection*/
@@ -1212,14 +1246,25 @@ espconn_server_recv(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
  * Returns      : ERR_OK: try to send some data by calling tcp_output
  *                ERR_ABRT: if you have called tcp_abort from within the function!
 *******************************************************************************/
+/*Guarded the same way as espconn_client_sent(), and this is the one the field
+ *core faulted in -- see the comment there.*/
 static err_t ICACHE_FLASH_ATTR
 espconn_server_sent(void *arg, struct tcp_pcb *pcb, u16_t len)
 {
 	espconn_msg *psent_cb = arg;
 
+	if (psent_cb == NULL) {
+		espconn_sent_no_pbuf_cnt++;
+		return ERR_OK;
+	}
+
 	psent_cb->pcommon.pcb = pcb;
 	psent_cb->pcommon.recv_check = 0;
-	psent_cb->pcommon.pbuf->tot_len += len;
+	if (psent_cb->pcommon.pbuf == NULL) {
+		espconn_sent_no_pbuf_cnt++;
+	} else {
+		psent_cb->pcommon.pbuf->tot_len += len;
+	}
 	psent_cb->pcommon.packet_info.sent_length = len;
 
 	/*Send more data for one active connection*/

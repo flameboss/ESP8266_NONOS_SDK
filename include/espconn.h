@@ -647,6 +647,16 @@ sint8 espconn_recv_hold(struct espconn *pespconn);
 sint8 espconn_recv_unhold(struct espconn *pespconn);
 
 /******************************************************************************
+ * Counts acks delivered to the tcp sent callbacks with no outstanding buffer to
+ * credit them to. Non-zero means the guards in espconn_client_sent() and
+ * espconn_server_sent() are catching what used to be an exception 28 on a NULL
+ * pcommon.pbuf. Exposed so the application can report it: the guard makes the
+ * crash survivable but says nothing on its own about whether the espconn_msg was
+ * merely drained or had been freed.
+*******************************************************************************/
+extern uint32 espconn_sent_no_pbuf_cnt;
+
+/******************************************************************************
  * FunctionName : espconn_recved_len
  * Description  : get TCP readable data bytes
  * Parameters   : espconn -- espconn to unhold

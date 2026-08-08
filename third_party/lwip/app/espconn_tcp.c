@@ -880,6 +880,10 @@ static void ICACHE_FLASH_ATTR espconn_tcp_finish(void *arg)
  *espconn_client_sent() and espconn_server_sent() below.*/
 uint32 espconn_sent_no_pbuf_cnt = 0;
 
+/*Counts err callbacks that arrived with a pointer the callback assumed was
+ *non-NULL -- see the guards in espconn_client_err() and esponn_server_err().*/
+uint32 espconn_err_null_cnt = 0;
+
 /*Both sent callbacks used to dereference pcommon.pbuf unconditionally. An ack
  *can arrive when that list is already empty: espconn_tcp_finish() drains it once
  *every queued buffer has been acked, and the reconnect and disconnect paths drain
@@ -942,14 +946,26 @@ espconn_client_err(void *arg, err_t err)
 
     if (perr_cb != NULL) {
         pcb = perr_cb->pcommon.pcb;
-        perr_cb->pespconn->state = ESPCONN_CLOSE;
+        if (perr_cb->pespconn != NULL) {
+        	perr_cb->pespconn->state = ESPCONN_CLOSE;
+        } else {
+        	espconn_err_null_cnt++;
+        }
+        /*Note the espconn_printf below dereferences pcb unguarded. It is a no-op
+         *macro as shipped, so its arguments are never evaluated; enabling it would
+         *reintroduce the fault this function is guarded against.*/
         espconn_printf("espconn_client_err %d %d %d\n", pcb->state, pcb->nrtx, err);
 
 //        /*remove the node from the client's active connection list*/
 //        espconn_list_delete(&plink_active, perr_cb);
 
+        if (pcb == NULL) {
+        	espconn_err_null_cnt++;
+        }
+
         /*Set the error code depend on the error type and control block state*/
-        if (err == ERR_ABRT) {
+        /*Guarded like esponn_server_err -- see the comment there.*/
+        if (err == ERR_ABRT && pcb != NULL) {
         	switch (pcb->state) {
 					case SYN_SENT:
 						if (pcb->nrtx == TCP_SYNMAXRTX) {
@@ -1337,6 +1353,18 @@ espconn_server_poll(void *arg, struct tcp_pcb *pcb)
  *                err -- Error code to indicate why the pcb has been closed
  * Returns      : none
 *******************************************************************************/
+/*arg was already checked here, but pcommon.pcb and pespconn were not. Observed in
+ *the field on 4.27.028 during a local-access connection flood in AP mode:
+ *exception 28, excvaddr 0x10, pc at the l32i of pcb->state -- tcp_pcb.state sits
+ *at offset 16 -- with pcommon.pcb zero. A connection that never got a pcb
+ *assigned, because it was refused or aborted before the accept completed, reaches
+ *this callback with that field still clear, and the ERR_ABRT arm dereferences it
+ *to classify the abort.
+ *
+ *With no pcb there is nothing to classify from, so fall through to what the
+ *non-ERR_ABRT path already does and record err as it came in. Still ets_post()
+ *either way: the post is what gets the connection torn down and its slot
+ *released, and skipping it would trade this crash for a leak.*/
 static void ICACHE_FLASH_ATTR
 esponn_server_err(void *arg, err_t err)
 {
@@ -1345,13 +1373,21 @@ esponn_server_err(void *arg, err_t err)
     if (pserr_cb != NULL) {
 
     	pcb = pserr_cb->pcommon.pcb;
-    	pserr_cb->pespconn->state = ESPCONN_CLOSE;
+    	if (pserr_cb->pespconn != NULL) {
+    		pserr_cb->pespconn->state = ESPCONN_CLOSE;
+    	} else {
+    		espconn_err_null_cnt++;
+    	}
 
 //		/*remove the node from the server's active connection list*/
 //		espconn_list_delete(&plink_active, pserr_cb);
 
+    	if (pcb == NULL) {
+    		espconn_err_null_cnt++;
+    	}
+
     	/*Set the error code depend on the error type and control block state*/
-		if (err == ERR_ABRT) {
+		if (err == ERR_ABRT && pcb != NULL) {
 			switch (pcb->state) {
 				case SYN_RCVD:
 					if (pcb->nrtx == TCP_SYNMAXRTX) {

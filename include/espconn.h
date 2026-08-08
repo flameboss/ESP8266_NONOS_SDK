@@ -657,6 +657,14 @@ sint8 espconn_recv_unhold(struct espconn *pespconn);
 extern uint32 espconn_sent_no_pbuf_cnt;
 
 /******************************************************************************
+ * Counts err callbacks delivered with a pcb or espconn the callback assumed was
+ * non-NULL. Non-zero means the guards in espconn_client_err() and
+ * esponn_server_err() are catching what used to be an exception 28 on
+ * pcb->state. Exposed for the same reason as the count above.
+*******************************************************************************/
+extern uint32 espconn_err_null_cnt;
+
+/******************************************************************************
  * FunctionName : espconn_recved_len
  * Description  : get TCP readable data bytes
  * Parameters   : espconn -- espconn to unhold
